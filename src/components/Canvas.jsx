@@ -607,7 +607,13 @@ const Canvas = () => {
     <div className="wrapper">
       <header>
         <h1>A* Visualizer</h1>
-        <a href="https:/www.thomassmidt.dk/">Visit my website!</a>
+        <a
+          href="https://www.thomassmidt.dk/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Visit my website!
+        </a>
       </header>
       <canvas
         ref={canvasRef}
