@@ -33,10 +33,30 @@ a {
   color: white;
 }
 
+p {
+  position: fixed;
+  font-size: 2rem;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: 0;
+  color: white;
+  padding: 3rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 2px solid rgba(255, 255, 255, 0.34);
+  border-radius: 10px;
+}
+
+.hidden {
+  display: none;
+}
+
 button {
   padding: 1rem;
   border-radius: 10px;
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   cursor: pointer;
   border: none;
   background: rgba(255, 255, 255, 0.25);
@@ -64,8 +84,8 @@ button:disabled:hover {
   display: flex;
   justify-content: space-around;
   width: 90vw;
-  max-width: 900px;
-  gap: 10px;
+  max-width: 800px;
+  gap: 5px;
   flex-wrap: wrap;
 }
 
@@ -73,30 +93,10 @@ button:disabled:hover {
   display: block;
 }
 
-p {
-  position: fixed;
-  font-size: 2rem;
-  top: 45%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: 0;
-  color: white;
-  padding: 3rem;
-  background-color: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  border: 2px solid rgba(255, 255, 255, 0.34);
-  border-radius: 10px;
-}
-
-.hidden {
-  display: none;
-}
-
 .draw-controls,
 .maze-options {
   display: flex;
-  gap: 10px;
+  gap: 5px;
 }
 
 .draw-controls-wrapper,
@@ -174,6 +174,7 @@ h2 {
   margin: 0;
 }
 
+/* Slider */
 input[type="range"] {
   -webkit-appearance: none; /* For Chrome, Safari, Edge */
   appearance: none; /* Standard property */
@@ -239,9 +240,7 @@ input[type="range"]::-ms-track {
 }
 
 @media (max-width: 1000px) {
-  button {
-    font-size: 1rem;
-  }
+  button,
   .brush-erase-wrapper button svg {
     font-size: 1rem;
   }
@@ -258,15 +257,32 @@ input[type="range"]::-ms-track {
 
 @media (max-width: 768px) {
   canvas {
-    width: 95vw; /* Slightly larger on smaller screens to utilize space */
+    width: 95vw;
   }
   .button-wrapper {
     justify-content: center;
+  }
+  button,
+  .brush-erase-wrapper button svg {
+    font-size: 2rem;
+  }
+
+  .draw-controls,
+  .maze-options {
+    display: flex;
+    gap: 10px;
   }
 }
 
 @media (max-width: 480px) {
   canvas {
-    width: 98vw; /* Almost full width on very small screens */
+    width: 98vw;
+  }
+}
+
+@media (max-width: 380px) {
+  button,
+  .brush-erase-wrapper button svg {
+    font-size: 1rem;
   }
 }

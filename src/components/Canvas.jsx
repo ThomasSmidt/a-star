@@ -80,9 +80,7 @@ const Canvas = () => {
       this.neighbors = []; // Neighbors of the spot
       this.cameFrom = undefined; // Previous spot in path
       this.wall = false; // Is it a wall?
-      if (Math.random(1) < 0.3) {
-        this.wall = true;
-      }
+
       this.show = function (col) {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -185,7 +183,9 @@ const Canvas = () => {
     if (!canvas || width === 0 || height === 0) return; // Add checks for dimensions
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, width, height);
-    setPathFound(true);
+
+    setPathFound(true); // Remove no path found text overlay when grid is initialized
+
     const grid = gridRef.current;
     for (let i = 0; i < cols; i++) {
       for (let j = 0; j < rows; j++) {
@@ -201,16 +201,9 @@ const Canvas = () => {
         }
       }
     }
-  }, [width, height, cols, rows]); // Add width and height to dependencies
+  }, [width, height, cols, rows]);
 
-  // initializeGridStructure now uses drawInitialGrid
   const initializeGridStructure = useCallback(() => {
-    // Only proceed if width and height are available
-    if (width === 0 || height === 0) return;
-
-    cellWidthRef.current = width / cols;
-    cellHeightRef.current = height / rows;
-
     gridRef.current = new Array(cols);
     for (let i = 0; i < cols; i++) {
       gridRef.current[i] = new Array(rows);
@@ -233,9 +226,9 @@ const Canvas = () => {
     startRef.current.wall = false;
     endRef.current.wall = false;
 
-    console.log("Grid structure initialized.");
-    drawInitialGrid(); // Draw the initial empty grid
-  }, [Spot, drawInitialGrid, width, height]); // Add width and height to dependencies
+    console.log("Grid data structure initialized.");
+    resetPathfindingState();
+  }, [Spot, cols, rows]);
 
   const resetPathfindingState = () => {
     const grid = gridRef.current;
@@ -402,8 +395,19 @@ const Canvas = () => {
     if (!canvas) return null;
     // Use getBoundingClientRect to get the actual rendered size and position
     const bounds = canvas.getBoundingClientRect();
-    const x = e.clientX - bounds.left;
-    const y = e.clientY - bounds.top;
+    let clientX, clientY;
+
+    // Check if it's a touch event or a mouse event
+    if (e.touches && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    const x = clientX - bounds.left;
+    const y = clientY - bounds.top;
 
     const cellX = Math.floor(x / cellWidthRef.current);
     const cellY = Math.floor(y / cellHeightRef.current);
@@ -414,8 +418,13 @@ const Canvas = () => {
     return null;
   };
 
-  const handleMouseDown = useCallback(
+  const handleInteractionStart = useCallback(
     (e) => {
+      // Prevent default touch behavior (like scrolling or zooming) if it's a touch event
+      if (e.type === "touchstart") {
+        e.preventDefault();
+      }
+
       if (animationStarted) return;
       const coords = getGridCoordinates(e);
       if (coords) {
@@ -442,8 +451,13 @@ const Canvas = () => {
     [animationStarted, drawInitialGrid, eraseMode, start, finishMode]
   );
 
-  const handleMouseMove = useCallback(
+  const handleInteractionMove = useCallback(
     (e) => {
+      // Prevent default touch behavior (like scrolling or zooming) if it's a touch event
+      if (e.type === "touchmove") {
+        e.preventDefault();
+      }
+
       if (!drawingMode || animationStarted) return;
       const coords = getGridCoordinates(e);
       if (coords) {
@@ -463,7 +477,7 @@ const Canvas = () => {
     [drawingMode, animationStarted, drawInitialGrid, eraseMode]
   );
 
-  const handleMouseUp = useCallback(() => {
+  const handleInteractionEnd = useCallback(() => {
     setDrawingMode(false);
   }, []);
 
@@ -505,7 +519,7 @@ const Canvas = () => {
     }
     resetPathfindingState();
     drawInitialGrid();
-  }, [animationStarted, drawInitialGrid]);
+  }, [animationStarted, drawInitialGrid, cols, rows]);
 
   const randomizeWalls = useCallback(() => {
     if (animationStarted) return;
@@ -522,29 +536,55 @@ const Canvas = () => {
 
     resetPathfindingState();
     drawInitialGrid();
-  }, [animationStarted, drawInitialGrid]);
+  }, [animationStarted, drawInitialGrid, cols, rows]);
 
-  // Re-run initializeGridStructure when dimensions change
   useEffect(() => {
     initializeGridStructure();
-  }, [initializeGridStructure, dimensions, gridSize]);
+  }, [gridSize, initializeGridStructure]);
+
+  // Re-draw when dimensions or gridsize changes
+  useEffect(() => {
+    if (width > 0 && height > 0) {
+      cellWidthRef.current = width / cols;
+      cellHeightRef.current = height / rows;
+      drawInitialGrid();
+    }
+  }, [dimensions, gridSize, drawInitialGrid, width, height, cols, rows]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    canvas.addEventListener("mousedown", handleMouseDown);
-    canvas.addEventListener("mousemove", handleMouseMove);
-    canvas.addEventListener("mouseup", handleMouseUp);
-    canvas.addEventListener("mouseleave", handleMouseUp);
+    // Mouse events
+    canvas.addEventListener("mousedown", handleInteractionStart);
+    canvas.addEventListener("mousemove", handleInteractionMove);
+    canvas.addEventListener("mouseup", handleInteractionEnd);
+    canvas.addEventListener("mouseleave", handleInteractionEnd);
+
+    // Touch events
+    canvas.addEventListener("touchstart", handleInteractionStart, {
+      passive: false,
+    });
+    canvas.addEventListener("touchmove", handleInteractionMove, {
+      passive: false,
+    });
+    canvas.addEventListener("touchend", handleInteractionEnd);
+    canvas.addEventListener("touchcancel", handleInteractionEnd);
 
     return () => {
-      canvas.removeEventListener("mousedown", handleMouseDown);
-      canvas.removeEventListener("mousemove", handleMouseMove);
-      canvas.removeEventListener("mouseup", handleMouseUp);
-      canvas.removeEventListener("mouseleave", handleMouseUp);
+      // Cleanup mouse events
+      canvas.removeEventListener("mousedown", handleInteractionStart);
+      canvas.removeEventListener("mousemove", handleInteractionMove);
+      canvas.removeEventListener("mouseup", handleInteractionEnd);
+      canvas.removeEventListener("mouseleave", handleInteractionEnd);
+
+      // Cleanup touch events
+      canvas.removeEventListener("touchstart", handleInteractionStart);
+      canvas.removeEventListener("touchmove", handleInteractionMove);
+      canvas.removeEventListener("touchend", handleInteractionEnd);
+      canvas.removeEventListener("touchcancel", handleInteractionEnd);
     };
-  }, [handleMouseDown, handleMouseMove, handleMouseUp]);
+  }, [handleInteractionStart, handleInteractionMove, handleInteractionEnd]);
 
   useEffect(() => {
     if (animationStarted) {
@@ -567,7 +607,7 @@ const Canvas = () => {
     <div className="wrapper">
       <header>
         <h1>A* Visualizer</h1>
-        <a href="https:/thomassmidt.dk/">Visit my website!</a>
+        <a href="https:/www.thomassmidt.dk/">Visit my website!</a>
       </header>
       <canvas
         ref={canvasRef}
@@ -607,24 +647,6 @@ const Canvas = () => {
           <h2>Maze Options</h2>
         </div>
 
-        <div className="grid-size-control-wrapper">
-          <h2>Grid Size</h2>
-
-          <label htmlFor="grid-size">
-            {gridSize}x{gridSize}
-          </label>
-          <input
-            id="grid-size"
-            type="range"
-            value={gridSize}
-            onChange={handleGridSizeChange}
-            min="5"
-            max="50"
-            step="5"
-            disabled={animationStarted}
-          />
-        </div>
-
         <div className="draw-controls-wrapper">
           <div className="draw-controls">
             <button
@@ -661,6 +683,24 @@ const Canvas = () => {
             </div>
           </div>
           <h2>Draw Controls</h2>
+        </div>
+
+        <div className="grid-size-control-wrapper">
+          <label htmlFor="grid-size">
+            {gridSize}x{gridSize}
+          </label>
+          <input
+            id="grid-size"
+            type="range"
+            value={gridSize}
+            onChange={handleGridSizeChange}
+            min="5"
+            max="50"
+            step="5"
+            disabled={animationStarted}
+          />
+
+          <h2>Grid Size</h2>
         </div>
       </div>
       <p class={!pathFound ? "" : "hidden"}>No path possible.</p>
