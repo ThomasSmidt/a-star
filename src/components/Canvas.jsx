@@ -22,9 +22,6 @@ const Canvas = () => {
   const [eraseMode, setEraseMode] = useState(false);
   const [start, setStart] = useState(false);
   const [finishMode, setFinish] = useState(false);
-  const canvasRef = useRef(null);
-  const requestRef = useRef();
-  const animationFrame = useRef(0);
 
   //Grid definitions
   const cols = gridSize;
@@ -44,6 +41,9 @@ const Canvas = () => {
   const pathRef = useRef([]);
   const cellWidthRef = useRef(0);
   const cellHeightRef = useRef(0);
+  const canvasRef = useRef(null);
+  const requestRef = useRef();
+  const animationFrame = useRef(0);
 
   // This useEffect will now read the actual rendered dimensions of the canvas
   useEffect(() => {
@@ -307,7 +307,7 @@ const Canvas = () => {
       }
 
       for (let i = 0; i < openSet.length; i++) {
-        openSet[i].show("#22ff0002");
+        openSet[i].show("#00eeff02");
       }
 
       path = [];
@@ -324,7 +324,7 @@ const Canvas = () => {
 
       if (current === end) {
         console.log("Done!");
-        drawLine(path, "#ffcb0f");
+        drawLine(path, "#ff27db");
         return false;
       }
 
@@ -606,14 +606,39 @@ const Canvas = () => {
   return (
     <div className="wrapper">
       <header>
-        <h1>A* Visualizer</h1>
-        <a
-          href="https://www.thomassmidt.dk/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Visit my website!
-        </a>
+        <div className="title">
+          <h1>A* Visualizer</h1>
+          <a
+            href="https://www.thomassmidt.dk/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Visit my website!
+          </a>
+        </div>
+        <div className="helpers">
+          <div className="start">
+            <span>Start</span>
+          </div>
+          <div className="end">
+            <span>End</span>
+          </div>
+          <div className="path">
+            <span>Path</span>
+          </div>
+          <div className="optimal-path">
+            <span>Best Path</span>
+          </div>
+          <div className="wall">
+            <span>Wall</span>
+          </div>
+          <div className="open-set">
+            <span>Open Set</span>
+          </div>
+          <div className="closed-set">
+            <span>Closed set</span>
+          </div>
+        </div>
       </header>
       <canvas
         ref={canvasRef}
